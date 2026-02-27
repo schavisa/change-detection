@@ -123,7 +123,7 @@ change_norm = (change_intensity - change_intensity.min()) / (
 log("Normalized change intensity to 0-1 range.")
 
 # Threshold
-threshold = 0.2
+threshold = 0.2 #why 0.2??
 log(f"Applying threshold: {threshold}")
 
 change_binary = (change_norm > threshold).astype(np.uint8)

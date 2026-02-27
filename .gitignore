@@ -1,4 +1,1 @@
 ./.venv
-./data
-./aoi.geojson
-./example_change_detection.py

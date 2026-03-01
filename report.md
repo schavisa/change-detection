@@ -8,7 +8,7 @@
 
 ## 1. Method: Algorithm and Rationale
 
-The analysis utilizes a **Statistical Multi-Band Change Detection** workflow. The core objective is to differentiate between sensor noise (atmospheric haze, sun angle) and actual ground displacement or land cover change.
+The analysis utilizes a **Statistical Multi-Band Change Detection** workflow to differentiate between sensor noise and actual ground displacement or land cover change.
 
 ### Technical Implementation
 1. **Normalization:** Both image stacks undergo min-max scaling to a 0–1 range. This accounts for varying atmospheric conditions between Date 1 and Date 2.

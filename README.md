@@ -62,7 +62,7 @@ python main.py
 ## 📊 Results & Observed Patterns
 
 * **Statistical:** Band difference distributions are consistently **right-skewed**. Band 1 (Blue) exhibits the widest distribution spread, possibly due to its higher sensitivity to atmospheric residuals.
-* **Spatial:** Significant change clusters correlate directly with the advancement of the mining face in existing pits and routine maintenance of haul roads.
+* **Spatial:** Significant change clusters correlate directly with the advancement of the mining face in existing pits and routine maintenance of roads.
 * **Noise:** Minor artifacts, appearing as linear "strip lines," are identified as satellite mosaicking or sensor-edge artifacts rather than physical ground changes.
 
 ---

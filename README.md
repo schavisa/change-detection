@@ -17,7 +17,7 @@ The repository is structured into five functional modules to ensure maintainabil
 ## How to Run the Code
 
 ### 1. Prerequisites
-Ensure you have Python 3.8+ installed. Install the dependencies:
+Ensure you have Python 3.11+ installed. Install the dependencies:
 ```bash
 pip install numpy rasterio geopandas shapely matplotlib opencv-python pandas
 ```

@@ -13,7 +13,9 @@ The analysis utilizes a **Statistical Multi-Band Change Detection** workflow to 
 ### Technical Implementation
 1. **Normalization:** Both image stacks undergo min-max scaling to a 0–1 range. This accounts for varying atmospheric conditions between Date 1 and Date 2.
 2. **Band Difference:** For each band $b$, we calculate the absolute difference:  
-   $$D_b = |Band_{Date2} - Band_{Date1}|$$
+   <p align="center">
+      $$D_b = |Band_{Date2} - Band_{Date1}|$$
+   </p>
 3. **Statistical Thresholding ($k$-sigma):** Instead of a static threshold, the algorithm calculates a dynamic limit based on the scene's variance:
    $$T = \mu + k \cdot \sigma$$
    Using $k=2.0$ ensures that only changes exceeding two standard deviations from the mean (the top ~5% of variance) are flagged.

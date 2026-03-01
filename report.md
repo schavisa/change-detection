@@ -1,114 +1,75 @@
-# Change Detection Report
+# Satellite Change Detection Analysis Report
 
-## 1. Method
+**Analysis Period:** August 12, 2023 – September 02, 2023  
+**Sensor:** Sentinel-2   
+**Target:** Industrial/Mining Complex  
 
-### Change detection algorithm chosen  
-The implemented approach uses a multi-band spectral difference with Euclidean magnitude:
+---
 
-1. Three-band Sentinel-2 imagery from two dates are stacked  
-2. Per-pixel spectral difference is computed  
-3. Change intensity is calculated as the Euclidean norm across bands  
-4. The result is normalized to a 0–1 range  
-5. A threshold of 0.2 is applied to produce a binary change mask  
+## 1. Method: Algorithm and Rationale
 
-Mathematically:
+The analysis utilizes a **Statistical Multi-Band Change Detection** workflow. The core objective is to differentiate between sensor noise (atmospheric haze, sun angle) and actual ground displacement or land cover change.
 
-**Spectral difference:**  
-$$\Delta = I_{t2} - I_{t1}$$
+### Technical Implementation
+1. **Normalization:** Both image stacks undergo min-max scaling to a 0–1 range. This accounts for varying atmospheric conditions between Date 1 and Date 2.
+2. **Band Difference:** For each band $b$, we calculate the absolute difference:  
+   $$D_b = |Band_{Date2} - Band_{Date1}|$$
+3. **Statistical Thresholding ($k$-sigma):** Instead of a static threshold, the algorithm calculates a dynamic limit based on the scene's variance:
+   $$T = \mu + k \cdot \sigma$$
+   Using $k=2.0$ ensures that only changes exceeding two standard deviations from the mean (the top ~5% of variance) are flagged.
+4. **Majority Fusion:** To eliminate "salt-and-pepper" noise (single-pixel anomalies), a **Majority Fusion** rule is applied. A pixel is only marked as "changed" if at least 2 out of 3 bands satisfy the threshold condition.
+5. **Vectorization & Confidence:** The binary raster is converted to polygons. Each polygon is assigned a **Confidence Score** based on the mean change magnitude within its boundary.
 
-**Change magnitude:**  
-$$\|\Delta\| = \sqrt{b_1^2 + b_2^2 + b_3^2}$$
+**Why this method?** The provided dataset consists of optical bands, which limits the use of advanced spectral indices (e.g., NDVI or NDWI). Additionally, while machine learning approaches are powerful, supervised classification requires extensive labeled training data, and unsupervised methods often require mining characteristic interpretation. Consequently, this statistical approach was selected for its robustness and straightforward implementation.
 
-**Binary classification:**  
-$$\text{Change} = \|\Delta\| > 0.2$$
+![Box Plot](/fig/bandDifference_boxPlot.png)
+<p align="center">
+   <b>Fig 1 Band Difference Box Plot</b>
+</p>
 
+![Histogram](/fig/bandDifference_histogram.png)
+<p align="center">
+   <b>Fig 2 Band Difference Histogram</b>
+</p>
 
-### Why this method
+Following Step 2, the box plot and histogram of the band differences were analyzed. The box plot indicates that the distribution patterns between the two dates are highly similar, with only a marginal difference in their means. Furthermore, the histograms for all three band differences are significantly right-skewed, suggesting that no single band is  dominant in capturing change. Based on these observations, $k$-sigma and Majority Fusion were implemented to determine the final change thresholds.
 
-This method was selected because:
+---
 
-- Simple and interpretable: Direct band difference clearly shows spectral change
-- No training data required: Suitable for rapid assessment
-- Efficient: Computationally light and easy to implement
-- Robust to multi-band variation: Euclidean magnitude captures overall spectral shift
-- Consistent with baseline approaches used in operational change detection workflows
+## 2. Results: Observed Change Patterns
 
-The chosen threshold (0.2) represents a moderate sensitivity level, balancing noise suppression and detection of meaningful changes.
+The analysis identifies high-intensity surface alterations concentrated within the active mining zones.
 
+### Statistical Distribution
+* As shown in the **Boxplots (Fig 1)**, the median change is low (approx. 0.03), indicating most of the scene is stable.
+* The **Histograms (Fig 2)** shows a heavy-tailed distribution across all bands. Specifically, the blue band (represented as Band 1) reveals a wider sperad distribution which indicateing higher sensitivity to the surface materials or atmospheric conditions.
 
-## 2. Results
+### Spatial Patterns
+* Significant clusters are detected at the existing pits, marking the ongoing advancement of the mining face.
+* Boundary shifts are observed ponds in pit, likely representing fluctuations in water levels.
+* Linear change features align with roads, indicating heavy vehicle traffic or road maintenance.
 
-### Where changes occur
+---
 
-The detected changes appear as clusters of pixels forming polygons distributed across the Area of Interest (AOI). The system identified:
+## 3. Interpretation: What the Changes Represent
 
-- Multiple discrete change polygons
-- A measurable total changed area (computed in square meters)
-- Spatially localized regions rather than uniform change across the scene
+Based on the spatial distribution of the red-contoured polygons in **Fig 3**, the detected changes represent **Active Mining Operations** during the observation period.
 
-The output includes:
-
-- Continuous change intensity raster
-- Binary change mask
-- Vector polygons of detected change regions
-- Histogram showing distribution of change polygon sizes
-
-
-### Pattern of changes observed
-
-From spatial and statistical outputs:
-
-- Patch-like clusters indicate localized changes
-- Small polygons dominate, suggesting fine-scale variation
-- Some larger contiguous areas indicate more significant land cover modification
-- Change distribution is non-uniform, suggesting human or environmental drivers rather than sensor noise
+<p align="center">
+  <img src="fig/change_detection_swipe.gif" alt="Change Detection Swipe Animation" width="400">
+  <br>
+  <b>Fig 3: Interactive Change Detection Swipe (Date 2 vs. Date 1)</b>
+</p>
 
 
-## 3. Interpretation
+* The clustered polygons in the north-west sector coincide with areas where vegetation or soil has been removed.
+* Change clusters within and around existing pits represent continuous extraction and earthmoving activities.
+* The script calculates a total changed area (in $m^2$), allowing for precise monitoring of land-use rates. This data is stored in the `change_detection.sqlite` database for temporal tracking.
+* Minor noise is visible as "strip lines," which are artifacts resulting from the satellite image mosaicking or sensor-edge combinations rather than actual ground changes.
 
-The detected spectral changes may represent several real-world processes depending on the land cover context:
+---
 
-### Possible interpretations
-
-Urban expansion
-- New buildings, roads, or infrastructure
-- Increase in impervious surfaces
-- Strong spectral change across all bands
-
-Vegetation change
-- Growth or decline of vegetation
-- Crop cycles or replanting
-- Changes in chlorophyll reflectance
-
-Land clearing
-- Removal of vegetation for construction or agriculture
-- Typically appears as large, coherent change patches
-
-Seasonal variation
-- Differences between acquisition dates (Aug vs Sept)
-- Changes in soil moisture or vegetation condition
-- Shadows and illumination differences
-
-Noise or artifacts
-- Atmospheric effects
-- Sensor differences
-- Misregistration or slight alignment errors
-- Threshold sensitivity effects
-
-
-### Key insight
-
-Because the method is purely spectral, it detects all changes regardless of cause. Therefore:
-
-- It is effective for initial screening
-- Further classification or contextual data is needed to assign semantic meaning
-
-
-## Summary
-
-This workflow demonstrates a simple, robust, and scalable change detection pipeline using Sentinel-2 imagery. It efficiently identifies areas of change and converts them into analysis-ready vector features suitable for:
-
-- Monitoring land use change
-- Supporting urban planning
-- Environmental monitoring
-- Rapid situational assessment
+## Output Files
+* `change_map.tif`: Normalized magnitude of change.
+* `change_binary.tif`: Cleaned mask of significant changes.
+* `change_detection.sqlite`: Vectorized features with area and confidence metrics.
